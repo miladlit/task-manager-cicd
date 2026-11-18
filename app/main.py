@@ -44,3 +44,10 @@ def delete_task(task_id: int):
 
     raise HTTPException(status_code=404, detail="Task not found")
 
+@app.get("/version")
+def get_version():
+    return {
+        "version": "2.0",
+        "message": "Task Manager Version 2"
+    }
+
