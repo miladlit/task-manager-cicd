@@ -9,24 +9,38 @@ on:
 
 jobs:
   test:
-    name: Run Python Tests
+    name: Run Python Tests and Ruff
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.14'
 
       - name: Install dependencies
         run: |
           python -m pip install -r requirements.txt
+          python -m pip install ruff
 
       - name: Run tests
-        run: python -m pytest -v
+        run: |
+          mkdir -p reports
+          python -m pytest -v --junitxml=reports/pytest.xml
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-results
+          path: reports/pytest.xml
+          if-no-files-found: warn
+
+      - name: Check code quality with Ruff
+        run: python -m ruff check app tests
 
   docker-build:
     name: Build and Verify Docker Image
@@ -35,7 +49,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Build Docker image
         run: docker build -t task-manager:${{ github.sha }} .
