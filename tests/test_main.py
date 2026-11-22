@@ -1,58 +1,53 @@
-
-from fastapi.testclient import TestClient
-
-from app.main import app, tasks
-
-client = TestClient(app)
+"""API integration tests. The original endpoints still work."""
 
 
-def test_health():
+def test_health(client):
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
 
 
-def test_create_and_get_tasks():
-    tasks.clear()
-
-    # Create a new task
-    response = client.post(
-        "/tasks",
-        json={"title": "Learn CI/CD"}
-    )
-
+def test_create_and_get_tasks(client):
+    response = client.post("/tasks", json={"title": "Learn CI/CD"})
     assert response.status_code == 200
     assert response.json()["title"] == "Learn CI/CD"
 
-    # Get all tasks
     response = client.get("/tasks")
-
     assert response.status_code == 200
     assert len(response.json()) == 1
     assert response.json()[0]["title"] == "Learn CI/CD"
 
-    tasks.clear()
 
-def test_delete_task():
-    tasks.clear()
-
-    # Create a task
-    response = client.post(
-        "/tasks",
-        json={"title": "Learn Docker"}
-    )
+def test_delete_task(client):
+    response = client.post("/tasks", json={"title": "Learn Docker"})
     task_id = response.json()["id"]
-
-    # Delete the task
     response = client.delete(f"/tasks/{task_id}")
     assert response.status_code == 200
-    assert response.json() == {
-        "message": "Task deleted successfully"
-    }
+    assert response.json() == {"message": "Task deleted successfully"}
+    assert client.delete(f"/tasks/{task_id}").status_code == 404
 
-    # Check that deleting it again returns 404
-    response = client.delete(f"/tasks/{task_id}")
-    assert response.status_code == 404
 
-    tasks.clear()
+def test_update_task_and_stats(client):
+    task = client.post("/tasks", json={"title": "Learn Kubernetes"}).json()
+    updated = client.patch(
+        f"/tasks/{task['id']}", json={"completed": True, "priority": "high"}
+    )
+    assert updated.status_code == 200
+    assert updated.json()["completed"] is True
+    assert updated.json()["priority"] == "high"
+    assert client.get("/stats").json() == {"total": 1, "completed": 1, "remaining": 0}
 
+
+def test_ids_do_not_repeat_after_delete(client):
+    a = client.post("/tasks", json={"title": "First"}).json()
+    b = client.post("/tasks", json={"title": "Second"}).json()
+    client.delete(f"/tasks/{a['id']}")
+    c = client.post("/tasks", json={"title": "Third"}).json()
+    assert len({a["id"], b["id"], c["id"]}) == 3
+
+
+def test_dashboard_and_metrics(client):
+    assert client.get("/dashboard").status_code == 200
+    assert "text/html" in client.get("/dashboard").headers["content-type"]
+    assert client.get("/ready").json() == {"status": "ready"}
+    assert b"taskflow_http_requests_total" in client.get("/metrics").content
