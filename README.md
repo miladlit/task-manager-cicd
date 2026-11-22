@@ -1,144 +1,78 @@
+# TaskFlow — Task Manager + DevOps Practice
 
-# Task Manager   CI/CD Project
+This started as my CI/CD course project at Nackademin. I improved it to practise the tools used in real DevOps work, especially for my upcoming LIA.
 
+The app is a FastAPI task manager with a modern website, PostgreSQL support, automatic tests, Docker, Prometheus metrics and a GitHub Actions pipeline.
 
+## Features
 
-This is my final project for the CI/CD course at Nackademin.
+- Modern dashboard at **http://localhost:8000/dashboard**
+- Add, edit, complete and delete tasks
+- Task priorities, descriptions and due dates
+- Search and filter tasks, plus progress statistics
+- Data stored in SQLite locally or PostgreSQL with Docker Compose
+- API docs at **http://localhost:8000/docs**
+- Health check `/health`, database readiness `/ready`, Prometheus metrics `/metrics`
 
-I created a simple Task Manager API using Python and FastAPI. The main purpose of this project is to learn how CI/CD works and how to automate testing and deployment.
-
-The application is simple because my main focus is on the CI/CD process.
-
-## What the Application Does
-
-The application allows users to:
-
-- Create a task
-- View all tasks
-- Delete a task
-- Check if the application is running
-- Check the application version
-
-The API can be tested in the browser at:
-
-http://localhost:8000/docs
-
-## Tools I Used
-
-- **Python and FastAPI:** To build the application.
-- **Git and GitHub:** To save and manage the code.
-- **GitHub Actions:** To automate the CI/CD pipeline.
-- **Pytest:** To test the application.
-- **Ruff:** To check code quality.
-- **Docker:** To run the application in a container.
-- **Bash:** To automate deployment and rollback.
-
-## How My CI/CD Pipeline Works
-
-When I push code to GitHub, GitHub Actions starts automatically.
-
-The pipeline:
-
-1. Downloads the code.
-2. Runs automated tests using Pytest.
-3. Checks the code using Ruff.
-4. Saves the test results.
-5. Builds a Docker image.
-6. Starts the application in a Docker container.
-7. Checks if the application works.
-8. Stops and removes the container.
-
-If a test or code check fails, the Docker build does not continue.
-
-This helps prevent broken code from moving further in the process.
-
-## How to Run the Project
-
-First, install the Python packages:
+## Run locally (Python)
 
 ```bash
 python -m pip install -r requirements.txt
-```
-
-Start the application:
-
-```bash
 python -m uvicorn app.main:app --reload
 ```
 
-Open this address in your browser:
+The app creates `data/tasks.db` automatically. This is ignored by Git. Open **http://localhost:8000/dashboard**.
 
-http://localhost:8000/docs
+## Run with PostgreSQL and Docker
 
-## Testing
+```bash
+cp .env.example .env
+docker compose up --build -d
+docker compose ps
+```
 
-Run the automated tests:
+This starts the app and a PostgreSQL database. Open **http://localhost:8000/dashboard**. Tasks are saved in a named Docker volume.
+
+Stop containers without deleting data: `docker compose down`
+
+**Do not use `docker compose down -v` unless you want to delete the PostgreSQL data.**
+
+## Tests
 
 ```bash
 python -m pytest -v
-```
-
-Check the code with Ruff:
-
-```bash
 python -m ruff check app tests
 ```
 
-## Docker
+There are unit tests for the task model and a pure summary function, and integration tests for the API. Tests use an isolated in-memory SQLite database, so they don't change your own tasks.
 
-Build the Docker image:
+## CI/CD
 
-```bash
-docker build -t task-manager:local .
-```
+A push/PR runs Pytest and Ruff. If they pass, the pipeline builds Docker and checks `/health`, `/ready` and the dashboard. Test results are saved as a downloadable artifact.
 
-Run the container:
+On a push to `main`, the pipeline also publishes a Docker image to GHCR, tagged with the commit SHA and `latest`.
 
-```bash
-docker run --rm -p 8000:8000 task-manager:local
-```
+If a repository secret named `INFRA_REPO_TOKEN` exists, another job updates the image tag in `miladlit/task-manager-infrastructure`. Argo CD can then deploy it to Kubernetes. If the secret is not set, that update is skipped.
 
-Check if the application works:
+**Important:** GHCR images may initially be private; make the practice package public or configure a Kubernetes pull secret. The first tag has to be published before Kubernetes can pull it.
 
-http://localhost:8000/health
+## Infrastructure and monitoring
 
-## Deployment and Rollback
+The companion repo is called `task-manager-infrastructure`. It contains Kubernetes, Argo CD, Prometheus, Grafana and optional OpenStack Terraform training files. Read its README first.
 
-I created three Bash scripts to make deployment easier.
+## Old rollback demo
 
-- `deploy_local.sh` starts version 2 of the application.
-- `verify.sh` checks that the application is running and the correct image is used.
-- `rollback_local.sh` restores the previous version.
+The original `scripts/deploy_local.sh`, `scripts/verify.sh` and `scripts/rollback_local.sh` were kept for the **old v1/v2 images**. They are a separate demonstration and do not deploy the new TaskFlow v3 image. See `docs/PRESENTATION.md`.
 
-The scripts are inside the `scripts` folder.
+## Limitations
 
-They can be run using:
+- This is a learning environment, not a production cloud service.
+- SQLite is for one local instance; Kubernetes uses shared PostgreSQL.
+- Database table creation uses SQLAlchemy `create_all`; a real team should use migrations (e.g., Alembic).
+- PostgreSQL in the training Kubernetes cluster has one instance and no backups or high availability.
+- The website does not have user accounts or authentication. Don't expose it publicly with real data.
+- A real deployment should include secret management, TLS, access controls, backups and security scanning.
 
-```bash
-bash scripts/deploy_local.sh
-bash scripts/verify.sh
-bash scripts/rollback_local.sh
-```
+## What I learned
 
-The deployment and rollback scripts use Docker images `task-manager:v1` and `task-manager:v2`, which need to be built locally first.
-
-## Testing a Failed Pipeline
-
-I also tested what happens when something goes wrong.
-
-I changed one test on purpose so it would fail.
-
-GitHub Actions detected the problem and stopped the Docker build.
-
-After fixing the test and pushing the changes again, the pipeline passed.
-
-This showed me why automated testing is important.
-
-
-## Conclusion
-
-This project helped me understand how CI/CD works in practice.
-
-The most important thing I learned is that CI/CD is not just about automating commands. It is about finding problems early, testing changes and making software delivery safer.
-
-There are still things I could improve, such as adding a database, more tests and deployment to a real server.
+CI/CD is about getting early feedback and releasing working changes safely. The project now also helps me practise database persistence, Kubernetes, GitOps and observability.

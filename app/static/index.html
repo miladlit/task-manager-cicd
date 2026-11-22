@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111827">
+  <meta name="description" content="TaskFlow — a modern task management dashboard powered by FastAPI and DevOps.">
+  <title>TaskFlow — Workspace</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-mark">✦</span><span>taskflow<span class="brand-dot">.</span></span></div>
+    <div class="sidebar-section-label">WORKSPACE</div>
+    <nav aria-label="Primary">
+      <a class="nav-link selected" href="/dashboard"><span class="nav-icon">▦</span> Overview</a>
+      <a class="nav-link" href="#tasks"><span class="nav-icon">☷</span> My tasks <span id="sidebar-count" class="nav-count">0</span></a>
+      <a class="nav-link" href="#new-task"><span class="nav-icon">⊕</span> Create task</a>
+      <div class="sidebar-section-label second">DEVELOPER</div>
+      <a class="nav-link" href="/docs" target="_blank" rel="noopener"><span class="nav-icon">⌘</span> API docs <span class="external">↗</span></a>
+      <a class="nav-link" href="/metrics" target="_blank" rel="noopener"><span class="nav-icon">◉</span> Metrics <span class="external">↗</span></a>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="sidebar-help"><span class="help-icon">✳</span><div><strong>Build. Ship. Learn.</strong><small>A DevOps learning project</small></div></div>
+      <div class="server-row"><span id="server-dot" class="server-dot"></span><span id="server-status">Checking server…</span><span id="version-label" class="server-version">v3.0</span></div>
+    </div>
+  </aside>
+
+  <div class="main-shell">
+    <header class="topbar">
+      <div class="crumb"><span>Workspace</span><span class="crumb-slash">/</span><strong>Overview</strong></div>
+      <div class="top-actions"><span class="today-label" id="today-label"></span><span class="top-separator"></span><div class="avatar" title="Your workspace">TM</div></div>
+    </header>
+
+    <main class="main-content">
+      <section class="hero">
+        <div class="hero-content"><span class="hero-kicker"><span class="hero-star">✦</span> YOUR DAILY WORKSPACE</span><h1>Make progress.<br><span>One task at a time.</span></h1><p>Organize what matters, stay on track, and make room for your best work.</p><a href="#new-task" class="hero-button">Create a task <span>↗</span></a></div>
+        <div class="hero-art" aria-hidden="true"><div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div><div class="art-card art-one"><span class="art-check">✓</span><span><i></i><i></i></span></div><div class="art-card art-two"><span class="art-circle">◉</span><span><i></i><i></i></span></div><div class="art-spark spark-a">✦</div><div class="art-spark spark-b">✧</div></div>
+      </section>
+
+      <section class="stats-grid" aria-label="Task statistics">
+        <article class="stat-card"><div class="stat-top"><span>Total tasks</span><span class="stat-icon stat-blue">▤</span></div><div id="total-tasks" class="stat-number">0</div><div class="stat-bottom"><span class="stat-indicator blue-dot"></span> Tasks in your workspace</div></article>
+        <article class="stat-card"><div class="stat-top"><span>In progress</span><span class="stat-icon stat-amber">◷</span></div><div id="remaining-tasks" class="stat-number">0</div><div class="stat-bottom"><span class="stat-indicator amber-dot"></span> Keep the momentum</div></article>
+        <article class="stat-card"><div class="stat-top"><span>Completed</span><span class="stat-icon stat-green">✓</span></div><div id="completed-tasks" class="stat-number">0</div><div class="stat-bottom"><span class="stat-indicator green-dot"></span> Every win counts</div></article>
+        <article class="stat-card progress-stat"><div class="stat-top"><span>Your progress</span><span class="stat-icon stat-purple">↗</span></div><div class="progress-flex"><div><div id="progress-percent" class="stat-number">0%</div><div class="stat-bottom">Keep going, you've got this</div></div><div id="progress-ring" class="progress-ring"><span id="progress-ring-label">0%</span></div></div></article>
+      </section>
+
+      <div class="work-grid">
+        <section id="tasks" class="panel tasks-panel">
+          <div class="panel-title-row"><div><span class="section-kicker">YOUR BOARD</span><h2>My tasks <span class="h2-count" id="task-count">0</span></h2><p>All your work, neatly organized.</p></div><button id="refresh-button" class="icon-button" type="button" aria-label="Refresh tasks" title="Refresh tasks">↻</button></div>
+          <div class="toolbar"><div class="search-wrap"><span aria-hidden="true">⌕</span><input type="search" id="search-tasks" placeholder="Search tasks…" aria-label="Search tasks"></div><select id="filter-tasks" aria-label="Filter tasks"><option value="all">All tasks</option><option value="active">In progress</option><option value="completed">Completed</option></select></div>
+          <div id="task-list" class="task-list"><div class="loading-state">Loading your tasks…</div></div>
+          <div class="list-bottom"><span id="visible-count">0 tasks shown</span><span>Small steps add up ✨</span></div>
+        </section>
+
+        <aside class="right-column">
+          <section id="new-task" class="panel create-panel"><div class="section-kicker">QUICK ADD</div><h2>Create a task</h2><p>Give your next idea a place to live.</p><form id="create-task-form"><label for="task-title">Task name</label><input id="task-title" name="title" type="text" placeholder="e.g. Deploy to Kubernetes" maxlength="150" required><label for="task-description">Description <span class="optional">optional</span></label><textarea id="task-description" name="description" placeholder="Add a few details…" maxlength="2000" rows="3"></textarea><div class="form-row"><div><label for="task-priority">Priority</label><select id="task-priority"><option value="medium">Medium</option><option value="low">Low</option><option value="high">High</option></select></div><div><label for="task-due-date">Due date</label><input id="task-due-date" type="date"></div></div><button id="submit-task" class="submit-button" type="submit">+ Add new task <span>→</span></button></form><p id="form-message" role="status" class="form-message"></p></section>
+          <section class="tip-card"><div class="tip-emoji">💡</div><span class="section-kicker">TODAY'S REMINDER</span><h3>Progress over perfection.</h3><p>It's not about doing everything. It's about moving forward, one task at a time.</p></section>
+        </aside>
+      </div>
+      <footer class="footer"><span>© TaskFlow · Built to learn, designed to grow.</span><span>FastAPI · PostgreSQL · Docker · Kubernetes</span></footer>
+    </main>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
