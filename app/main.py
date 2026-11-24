@@ -6,7 +6,7 @@ from time import perf_counter
 from typing import Annotated, Literal
 
 from fastapi import Depends, FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -101,7 +101,7 @@ class TaskResponse(BaseModel):
 
 @app.get("/")
 def home():
-    return {"message": "Welcome to Task Manager API", "dashboard": "/dashboard"}
+    return RedirectResponse(url="/dashboard")
 
 
 @app.get("/dashboard", include_in_schema=False)

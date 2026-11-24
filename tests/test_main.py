@@ -51,3 +51,9 @@ def test_dashboard_and_metrics(client):
     assert "text/html" in client.get("/dashboard").headers["content-type"]
     assert client.get("/ready").json() == {"status": "ready"}
     assert b"taskflow_http_requests_total" in client.get("/metrics").content
+
+def test_homepage_redirects_to_dashboard(client):
+    response = client.get("/", follow_redirects=False)
+
+    assert response.status_code == 307
+    assert response.headers["location"] == "/dashboard"
