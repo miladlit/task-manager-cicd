@@ -57,3 +57,9 @@ def test_homepage_redirects_to_dashboard(client):
 
     assert response.status_code == 307
     assert response.headers["location"] == "/dashboard"
+
+def test_version_for_demo(client):
+    response = client.get("/version")
+    assert response.status_code == 200
+    assert response.json()["version"] == "3.0"
+    
